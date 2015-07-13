@@ -1,0 +1,27 @@
+# Functions useful when working with docker
+# Add it to this file to your ~/bin directory, and then update your local
+# .bashrc file (~/.bashrc) to ensure it's available to your shell
+#
+
+docker-ip() {
+
+  ipString=$(sudo docker inspect $1 | grep -i ipaddr)
+  ipAddr=$(echo $ipString | grep -Po '"IPAddress":.*?[^\\]",' | awk '{ print $2;}' | sed s/\"//g | sed s/,//g)
+  echo $ipAddr
+}
+
+docker-ssh() {
+  IFS='@' read user_name container_id <<<"$1"
+
+  ipString=$(sudo docker inspect $container_id | grep -i ipaddr)
+
+  ipAddr=$(echo $ipString | grep -Po '"IPAddress":.*?[^\\]",' | awk '{ print $2;}' | sed s/\"//g | sed s/,//g)
+  
+  if ! grep -q $ipAddr ~/.ssh/known_hosts; then 
+    ssh-keyscan $ipAddr >> ~/.ssh/known_hosts
+  fi
+
+
+  ssh $user_name@$ipAddr
+}
+
